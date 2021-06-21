@@ -1,6 +1,13 @@
 #include <Adafruit_SSD1306.h>
 #include <TinyGPS++.h>
 #include <HardwareSerial.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+/* Your SECRETS */
+const char* ssid = "X";
+const char* password = "Y";
+String serverName = "http://Z/";
 
 /* Screen declarations */
 #define SCREEN_WIDTH 128  // OLED display width, in pixels
@@ -14,18 +21,29 @@
 #define SCREEN_ADDRESS 0x3C  // See doc
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+/* Debug values */
+#define TIMEOUT 30000
+
 /* GPS declarations */
 TinyGPSPlus gps;
 HardwareSerial hserial(1);
 
 /* Protocone declarations */
+typedef enum State {
+  P_Error = -1,
+  P_Init = 0,
+  P_Loading = 1,
+  P_Ok = 2,
+} State;
+
 typedef struct Protocone {
-  bool is_active;
-  uint32_t last_update_date, last_update_time;
+  State state;
+  uint8_t last_update[6];  // y, m, d, h, m, s
   double lon, lat;
   uint8_t power, shields;
   String capture_code;
   String name, team;
+  String debug;
 } Protocone;
 
 Protocone self;
@@ -53,34 +71,78 @@ void setup() {
 
   /* Protocone init */
   protocone_init(&self);
-}
 
-void loop() {
-  while (hserial.available() > 0) {
-    if (gps.encode(hserial.read())) {
-      self.is_active = protocone_update_gps(&self, gps);
+  /* Network init */
+  WiFi.begin(ssid, password);
+  Serial.println("Connecting");
+  while(WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    if (millis() > TIMEOUT && self.state == P_Loading) {
+      Serial.println("No WiFi...");
+      self.state = P_Error;
+      self.debug = "Timeout";
+      break;
     }
   }
 
-  display.clearDisplay();
-  if (self.is_active) {
-    text_on_screen(String("P:") + self.power, 0, 0);
-    text_on_screen(String("B:") + self.shields, MAX_COL - 2 - String(self.shields).length(), 0);
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println();
+    Serial.println("Connected!");
+    Serial.print("Local IP: ");
+    Serial.println(WiFi.localIP());
+    Serial.print("MAC: ");
+    Serial.println(WiFi.macAddress());
+  }
+}
 
-    text_on_line();
-  } else {  // Error somewhere
-    text_on_line(String(".inactive."), 0);
+void loop() {
+  /* GPS update */
+  while (hserial.available() > 0) {
+    if (gps.encode(hserial.read())) {
+      protocone_update_gps(&self, gps);
+    }
   }
 
   if (millis() > 5000 && gps.charsProcessed() < 10) {
     Serial.println("No GPS detected...");
-    self.is_active = false;
-    display.clearDisplay();
-    text_on_line(String(".inactive."), 0);
-    text_on_line(String("Erreur GPS"), 1);
-    text_on_line(String("Call a mod"), 2);
-    while(1);
+    self.state = P_Error;
+    self.debug = "No GPS";
   }
 
-  delay(100);
+  if (millis() > TIMEOUT && self.state == P_Loading) {
+    Serial.println("Loading taking too long...");
+    self.state = P_Error;
+    self.debug = "Timeout";
+  }
+  
+  /* Displaying infos */
+  display.clearDisplay();
+
+  switch(self.state) {
+    case P_Error:
+      text_on_line(String(".inactive."), 0);
+      text_on_line(String("E:") + self.debug, 1);
+      text_on_line(String("Call a mod"), 3);
+      while(1);
+      break;
+    case P_Init:
+      text_on_line(String(".not init."), 0);
+      break;
+    case P_Loading:
+      text_on_line(String("loading..."), 0);
+      text_on_line(String(self.debug), 1);
+      break;
+    case P_Ok:
+      text_on_line(String("working (:"), 0);
+      // TODO
+      break;
+    default:
+      text_on_line(String("... what?."), 0);
+      break;
+  }
+  
+  display.display();
+
+  delay(1000);
 }
