@@ -7,7 +7,7 @@
 /* Your SECRETS */
 const char* ssid = "X";
 const char* password = "Y";
-String serverName = "http://Z/";
+String serverName = "http://Z";
 
 /* Screen declarations */
 #define SCREEN_WIDTH 128  // OLED display width, in pixels
