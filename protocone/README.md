@@ -48,16 +48,24 @@ The screen should show the various configuration steps and then the information 
 
 
 ## Troubleshooting
-I have nothing on the display.
+**Q:** I have nothing on the display.
 
-: First check that the ESP is switched on (small red LED on). Then check the wiring. If the wiring seems to be correct, the wiring should be rechecked. If there is really no problem with the wiring, remove the display from the circuit and mount it as a single circuit with the ESP ([example](https://randomnerdtutorials.com/esp32-ssd1306-oled-display-arduino-ide/)) to check that it is not the display that is damaged. If the display does not turn on, check that the correct driver is used (it depends on the displays). If everything looks OK, well... Change the screen!
+**A:** First check that the ESP is switched on (small red LED on). Then check the wiring. If the wiring seems to be correct, the wiring should be rechecked. If there is really no problem with the wiring, remove the display from the circuit and mount it as a single circuit with the ESP ([example](https://randomnerdtutorials.com/esp32-ssd1306-oled-display-arduino-ide/)) to check that it is not the display that is damaged. If the display does not turn on, check that the correct driver is used (it depends on the displays). If everything looks OK, well... Change the screen!
 
-I have an error code on the display.
+##
 
-: `TimeoutWFI` means that the WiFi connection was not successful after many attempts. Check your connection settings.
+**Q:** I have an error code on the display.
 
-: `No GPS` means that the GPS module is not responding. Check that the antenna is correctly connected, check that the module is correctly connected, possibly follow the [tutorial](https://randomnerdtutorials.com/guide-to-neo-6m-gps-module-with-arduino/) in the form of a simple circuit to check that data is being received, and if nothing works, change the module.
+**A:** `TimeoutWFI` means that the WiFi connection was not successful after many attempts. Check your connection settings.
 
-: `TimeoutGPS` means that it was not possible to establish a connection with the GPS. The basic solution is to be effectively outside (i.e., sky visible to the antenna) when the device is turned on. If this is the very first time you are using the protocone, you may have to try again up to ten times (the GPS module memory has to "fill up" with the GPS locations). If it still doesn't work, try the [tutorial](https://randomnerdtutorials.com/guide-to-neo-6m-gps-module-with-arduino/) mentioned before. If still nothing, you probably need to change the antenna.
+`No GPS` means that the GPS module is not responding. Check that the antenna is correctly connected, check that the module is correctly connected, possibly follow the [tutorial](https://randomnerdtutorials.com/guide-to-neo-6m-gps-module-with-arduino/) in the form of a simple circuit to check that data is being received, and if nothing works, change the module.
 
-: Note: To "easily" check that the GPS module is receiving data, there is normally a small antenna flashing on it.
+`TimeoutGPS` means that it was not possible to establish a connection with the GPS. The basic solution is to be effectively outside (i.e., sky visible to the antenna) when the device is turned on. If this is the very first time you are using the protocone, you may have to try again up to ten times (the GPS module memory has to "fill up" with the GPS locations). If it still doesn't work, try the [tutorial](https://randomnerdtutorials.com/guide-to-neo-6m-gps-module-with-arduino/) mentioned before. If still nothing, you probably need to change the antenna.
+
+Note: To "easily" check that the GPS module is receiving data, there is normally a small LED flashing on the module.
+
+##
+
+**Q:** HELP!
+
+**A:** Send me a message, @Stache on Telegram. We will figure something out. (:.
