@@ -4,11 +4,12 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
+#include "arduino_secret.h"
 
 /* Your SECRETS */
-const char* ssid = "send nudes 2.0";
-const char* password = "whyareyallsohorny";
-String serverName = "http://Z";
+const char* ssid = SECRET_SSID;
+const char* password = SECRET_PASSWORD;
+String serverName = SECRET_SERVERNAME;
 
 /* Screen declarations */
 #define SCREEN_WIDTH 128  // OLED display width, in pixels
