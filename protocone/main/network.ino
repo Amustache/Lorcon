@@ -1,4 +1,4 @@
-int httpPOSTRequest(const String serverName, String json) {
+/*int httpPOSTRequest(const String serverName, String json) {
   HTTPClient http;
   
   http.begin(serverName);
@@ -74,4 +74,4 @@ String * json_get(String endpoint) {
     Serial.println("WiFi Disconnected");
     return NULL;
   }
-}
+}*/

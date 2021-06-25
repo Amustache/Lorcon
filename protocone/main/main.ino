@@ -3,10 +3,11 @@
 #include <HardwareSerial.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <Arduino_JSON.h>
 
 /* Your SECRETS */
-const char* ssid = "X";
-const char* password = "Y";
+const char* ssid = "send nudes 2.0";
+const char* password = "whyareyallsohorny";
 String serverName = "http://Z";
 
 /* Screen declarations */
@@ -22,7 +23,7 @@ String serverName = "http://Z";
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 /* Debug values */
-#define TIMEOUT 30000
+#define TIMEOUT 300*1000  // 300s or 5min
 
 /* GPS declarations */
 TinyGPSPlus gps;
@@ -37,6 +38,7 @@ typedef enum State {
 } State;
 
 typedef struct Protocone {
+  String uniqueid;
   State state;
   uint8_t last_update[6];  // y, m, d, h, m, s
   double lon, lat;
@@ -69,9 +71,6 @@ void setup() {
   display.display();
   display.clearDisplay();
 
-  /* Protocone init */
-  protocone_init(&self);
-
   /* Network init */
   WiFi.begin(ssid, password);
   Serial.println("Connecting");
@@ -94,6 +93,9 @@ void setup() {
     Serial.print("MAC: ");
     Serial.println(WiFi.macAddress());
   }
+
+  /* Protocone init */
+  protocone_init(&self, String(WiFi.macAddress()));
 }
 
 void loop() {

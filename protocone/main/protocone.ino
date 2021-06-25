@@ -1,4 +1,5 @@
-void protocone_init(Protocone* protocone) {
+void protocone_init(Protocone* protocone, String uniqueid_) {
+  protocone->uniqueid = uniqueid_;
   protocone->state = P_Init;
   protocone->last_update[0] = protocone->last_update[1] = protocone->last_update[2] = protocone->last_update[3] = protocone->last_update[4] = protocone->last_update[5] = -1;
   protocone->lon = 0.0;
