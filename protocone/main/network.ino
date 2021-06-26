@@ -1,4 +1,4 @@
-/*int httpPOSTRequest(const String serverName, String json) {
+int httpPOSTRequest(const char* serverName, const char* json) {
   HTTPClient http;
   
   http.begin(serverName);
@@ -22,20 +22,18 @@
   return httpResponseCode;
 }
 
-String httpGETRequest(const String serverName) {
+/*void httpGETRequest(const char* serverName, char* dest) {
   HTTPClient http;
     
   http.begin(serverName);
   
   // Send HTTP GET request
   int httpResponseCode = http.GET();
-  
-  String payload = "{}"; 
-  
+    
   if (httpResponseCode > 0) {
     Serial.print("HTTP Response code: ");
     Serial.println(httpResponseCode);
-    payload = http.getString();
+    strcpy(dest, http.getString().c_str());
   } else {
     Serial.print("Error code: ");
     Serial.println(httpResponseCode);
@@ -43,35 +41,33 @@ String httpGETRequest(const String serverName) {
   
   // Free resources
   http.end();
+}*/
 
-  return payload;
-}
-
-int json_post(String endpoint, String json) {
+int json_post(const char* endpoint, const char* json) {
   if (WiFi.status() == WL_CONNECTED) {
-    return httpPOSTRequest(serverName + endpoint, json);
+    return httpPOSTRequest(endpoint, json);
   } else {
     Serial.println("WiFi Disconnected");
     return -1;
   }
 }
 
-String * json_get(String endpoint) {
+/*void json_get(const char* endpoint, char** dest) {
   if (WiFi.status() == WL_CONNECTED) {
-    String request = httpGETRequest(serverName + endpoint);
+    char request[256];
+    httpGETRequest(endpoint, request);
     JSONVar myObject = JSON.parse(request);
     if (JSON.typeof(myObject) == "undefined") {
       Serial.println("Parsing input failed!");
-      return NULL;
     }
     JSONVar keys = myObject.keys();
-    String result[keys.length()];
+    char result[keys.length()][256];
     for (int i = 0; i < keys.length(); i++) {
       JSONVar value = myObject[keys[i]];
-      sensorReadingsArr[i] = String(value);
+      strcpy(result + i * 256 , value);
     }
   } else {
     Serial.println("WiFi Disconnected");
-    return NULL;
+    dest = NULL;
   }
 }*/
