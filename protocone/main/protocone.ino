@@ -1,12 +1,13 @@
 void protocone_init(Protocone* protocone, const char* uniqueid_) {
   strcpy(protocone->uniqueid, uniqueid_);
   protocone->state = P_Init;
-  protocone->last_update[0] = protocone->last_update[1] = protocone->last_update[2] = protocone->last_update[3] = protocone->last_update[4] = protocone->last_update[5] = -1;
+  // y, m, d, h, m, s
+  protocone->last_update[0] = protocone->last_update[1] = protocone->last_update[2] = protocone->last_update[3] = protocone->last_update[4] = protocone->last_update[5] = 0;
   protocone->lon = 0.0;
   protocone->lat = 0.0;
-  protocone->power = -1;
-  protocone->shields = -1;
-  strcpy(protocone->capture_code, uniqueid_);
+  protocone->power = 0;
+  protocone->shields = 0;
+  strcpy(protocone->capture_code, "d00d2bad");
   strcpy(protocone->name, "");
   strcpy(protocone->team, "");
   strcpy(protocone->debug, "");
@@ -21,7 +22,6 @@ void protocone_update_gps(Protocone* protocone, TinyGPSPlus gps) {
     protocone->last_update[3] = (gps.time.hour() + 2) % 24; // GMT+2
     protocone->last_update[4] = gps.time.minute();
     protocone->last_update[5] = gps.time.second();
-    Serial.println(String("Date and time ok: ") + protocone_get_last_update(protocone));
   } else {
     Serial.println("Date or time not valid.");
     protocone->state = P_Loading;
@@ -32,7 +32,6 @@ void protocone_update_gps(Protocone* protocone, TinyGPSPlus gps) {
   if (gps.location.isValid()) {
     protocone->lon = gps.location.lng();
     protocone->lat = gps.location.lat();
-    Serial.println(String("GPS ok: ") + protocone->lon + ", " + protocone->lat);
   } else {
     Serial.println("GPS not valid.");
     protocone->state = P_Loading;
@@ -43,6 +42,7 @@ void protocone_update_gps(Protocone* protocone, TinyGPSPlus gps) {
   protocone->state = P_Ok;
   strcpy(protocone->debug, "");
 
+  // Debug
   Serial.print(F("Location: "));
   Serial.print(gps.location.lat(), 6);
   Serial.print(F(","));
@@ -65,17 +65,30 @@ void protocone_update_gps(Protocone* protocone, TinyGPSPlus gps) {
   Serial.print(F("."));
   if (gps.time.centisecond() < 10) Serial.print(F("0"));
   Serial.println(gps.time.centisecond());
-  
 }
 
-String protocone_get_last_update_date(Protocone* protocone) {
-  return String(protocone->last_update[0]) + "-" + protocone->last_update[1] + "-" + protocone->last_update[2];
+void protocone_get_name_or_id(Protocone* protocone, char* dest) {
+  if (!strcmp(protocone->name, "")) {
+    strcpy(dest, protocone->uniqueid);
+  } else {
+    strcpy(dest, protocone->name);
+  }
 }
 
-String protocone_get_last_update_time(Protocone* protocone) {
-  return String(protocone->last_update[3]) + ":" + protocone->last_update[4] + ":" + protocone->last_update[5];
+void protocone_get_team(Protocone* protocone, char* dest) {
+  if (!strcmp(protocone->team, "")) {
+    strcpy(dest, "Personne !");
+  } else {
+    strcpy(dest, protocone->team);
+  }
 }
 
-String protocone_get_last_update(Protocone* protocone) {
-  return protocone_get_last_update_date(protocone) + " " + protocone_get_last_update_time(protocone);
+void protocone_get_date(Protocone* protocone, char* dest) {
+  // dd-mm-yyyy
+  snprintf(dest, sizeof(char) * 11, "%02d-%02d-20%02d", protocone->last_update[2], protocone->last_update[1], protocone->last_update[0]);
+}
+
+void protocone_get_time(Protocone* protocone, char* dest) {
+  // hh:mm
+  snprintf(dest, sizeof(char) * 6, "%02d:%02d", protocone->last_update[3], protocone->last_update[4]);
 }

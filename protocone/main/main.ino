@@ -38,18 +38,21 @@ typedef enum State {
 } State;
 
 typedef struct Protocone {
-  char uniqueid[8];
+  char uniqueid[9];
   State state;
   uint8_t last_update[6];  // y, m, d, h, m, s
   double lon, lat;
   uint8_t power, shields;
-  char capture_code[8];
-  char name[16];
-  char team[16];
-  char debug[16];
+  char capture_code[9];
+  char name[11];
+  char team[11];
+  char debug[11];
 } Protocone;
 
 Protocone self;
+
+/* Helpers */
+uint8_t timer;
 
 void setup() {
   /* Debug */
@@ -99,10 +102,21 @@ void setup() {
   }
 
   /* Protocone init */
-  protocone_init(&self, "abcdef");
+  char uid[9];
+  strncpy(uid, WiFi.macAddress().c_str(), 8);
+  protocone_init(&self, uid);
+
+  /* Helpers */
+  timer = 0;
 }
 
 void loop() {
+  /* Timer */
+  timer++;
+  if (timer > 60) {
+    timer = 0;
+  }
+  
   /* GPS update */
   while (hserial.available() > 0) {
     if (gps.encode(hserial.read())) {
@@ -140,8 +154,7 @@ void loop() {
       text_on_line(1, self.debug);
       break;
     case P_Ok:
-      text_on_line(0, "Working (:");
-      // TODO
+      display_info(&self, timer);
       break;
     default:
       text_on_line(0, "DEADBEEF");
@@ -150,6 +163,6 @@ void loop() {
   }
   
   display.sendBuffer();
-
+  
   delay(1000);
 }
