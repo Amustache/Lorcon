@@ -1,5 +1,5 @@
 void protocone_init(Protocone* protocone, const char* uniqueid_) {
-  strcpy(protocone->uniqueid, uniqueid_);
+  strncpy(protocone->uniqueid, uniqueid_, 8);
   protocone->state = P_Init;
   // y, m, d, h, m, s
   protocone->last_update[0] = protocone->last_update[1] = protocone->last_update[2] = protocone->last_update[3] = protocone->last_update[4] = protocone->last_update[5] = 0;
@@ -7,10 +7,10 @@ void protocone_init(Protocone* protocone, const char* uniqueid_) {
   protocone->lat = 0.0;
   protocone->power = 0;
   protocone->shields = 0;
-  strcpy(protocone->capture_code, "d00d2bad");
-  strcpy(protocone->name, "");
-  strcpy(protocone->team, "");
-  strcpy(protocone->debug, "");
+  strncpy(protocone->capture_code, "d00d2bad", 8);
+  strncpy(protocone->name, "", 10);
+  strncpy(protocone->team, "", 10);
+  strncpy(protocone->debug, "", 10);
   Serial.println("Protocone init done.");
 }
 
@@ -25,7 +25,7 @@ void protocone_update_gps(Protocone* protocone, TinyGPSPlus gps) {
   } else {
     Serial.println("Date or time not valid.");
     protocone->state = P_Loading;
-    strcpy(protocone->debug, "Datetime");
+    strncpy(protocone->debug, "Datetime", 10);
     return;
   }
 
@@ -35,12 +35,12 @@ void protocone_update_gps(Protocone* protocone, TinyGPSPlus gps) {
   } else {
     Serial.println("GPS not valid.");
     protocone->state = P_Loading;
-    strcpy(protocone->debug, "GPS");
+    strncpy(protocone->debug, "GPS", 10);
     return;
   }
 
   protocone->state = P_Ok;
-  strcpy(protocone->debug, "");
+  strncpy(protocone->debug, "", 10);
 
   // Debug
   Serial.print(F("Location: "));
@@ -69,17 +69,17 @@ void protocone_update_gps(Protocone* protocone, TinyGPSPlus gps) {
 
 void protocone_get_name_or_id(Protocone* protocone, char* dest) {
   if (!strcmp(protocone->name, "")) {
-    strcpy(dest, protocone->uniqueid);
+    strncpy(dest, protocone->uniqueid, 10);
   } else {
-    strcpy(dest, protocone->name);
+    strncpy(dest, protocone->name, 10);
   }
 }
 
 void protocone_get_team(Protocone* protocone, char* dest) {
   if (!strcmp(protocone->team, "")) {
-    strcpy(dest, "Personne !");
+    strncpy(dest, "Personne !", 10);
   } else {
-    strcpy(dest, protocone->team);
+    strncpy(dest, protocone->team, 10);
   }
 }
 
@@ -91,4 +91,56 @@ void protocone_get_date(Protocone* protocone, char* dest) {
 void protocone_get_time(Protocone* protocone, char* dest) {
   // hh:mm
   snprintf(dest, sizeof(char) * 6, "%02d:%02d", protocone->last_update[3], protocone->last_update[4]);
+}
+
+void protocone_from_json(Protocone* protocone, char* input) {
+  StaticJsonDocument<SIZE_FROM_EXT> doc;
+  
+  DeserializationError error = deserializeJson(doc, input, SIZE_FROM_EXT);
+
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return;
+  }
+
+  JsonObject json = doc[protocone->uniqueid];
+
+  protocone->power = json["power"];
+  protocone->shields = json["shields"];
+  strncpy(protocone->capture_code, json["capture_code"], 8);
+  strncpy(protocone->name, json["name"], 10);
+  strncpy(protocone->team, json["team"], 10);
+}
+
+void protocone_to_json(Protocone* protocone, char* output) {
+  StaticJsonDocument<SIZE_TO_EXT> doc;
+
+  JsonObject json = doc.createNestedObject(protocone->uniqueid);
+  json["state"] = protocone->state;
+  
+  JsonObject last_update = json.createNestedObject("last_update");
+  last_update["year"] = protocone->last_update[0];
+  last_update["month"] = protocone->last_update[1];
+  last_update["day"] = protocone->last_update[2];
+  last_update["hours"] = protocone->last_update[3];
+  last_update["minutes"] = protocone->last_update[4];
+  last_update["seconds"] = protocone->last_update[5];
+  
+  JsonObject location = json.createNestedObject("location");
+  location["lat"] = protocone->lat;
+  location["lon"] = protocone->lon;
+  
+  json["debug"] = protocone->debug;
+  
+  serializeJson(doc, output, SIZE_TO_EXT);
+}
+
+void protocone_update_with_server(Protocone* protocone, const char* endpoint) {
+  char dest[256];
+  strncpy(dest, endpoint, 128);
+  strncat(dest, protocone->uniqueid, 128);
+  
+  protocone_to_server(dest, protocone);
+  server_to_protocone(dest, protocone);
 }

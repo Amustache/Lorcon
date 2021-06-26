@@ -2,7 +2,7 @@
 #include <HardwareSerial.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <Arduino_JSON.h>
+#include <ArduinoJson.h>
 #include <U8g2lib.h>
 #include "arduino_secret.h"
 #include <string.h>
@@ -21,6 +21,10 @@ const char* serverName = SECRET_SERVERNAME;
 #define MAX_COL SCREEN_WIDTH/CHAR_WIDTH
 
 U8G2_SSD1306_128X64_NONAME_F_SW_I2C display(U8G2_R0, SCL, SDA, U8X8_PIN_NONE);
+
+/* Network */
+#define SIZE_FROM_EXT 96
+#define SIZE_TO_EXT 256
 
 /* Debug values */
 #define TIMEOUT 300*1000  // 300s or 5min
@@ -73,10 +77,10 @@ void setup() {
 
   /* Network init */
   WiFi.begin(ssid, password);
-  Serial.println("Connecting");
+  Serial.print("Connecting");
 
   display.clearBuffer();
-  strcpy(self.debug, "WiFi");
+  strncpy(self.debug, "WiFi", 10);
   text_on_line(0, "Loading..");
   text_on_line(1, self.debug);
   display.sendBuffer();
@@ -87,7 +91,7 @@ void setup() {
     if (millis() > TIMEOUT && self.state == P_Loading) {
       Serial.println("No WiFi...");
       self.state = P_Error;
-      strcpy(self.debug, "E:TimeWiFi");
+      strncpy(self.debug, "E:TimeWiFi", 10);
       break;
     }
   }
@@ -114,6 +118,10 @@ void loop() {
   /* Timer */
   timer++;
   if (timer > 60) {
+    // Update the server every 60 seconds
+    protocone_update_with_server(&self, serverName);
+
+    // Reset
     timer = 0;
   }
   
@@ -127,13 +135,13 @@ void loop() {
   if (millis() > 5000 && gps.charsProcessed() < 10) {
     Serial.println("No GPS detected...");
     self.state = P_Error;
-    strcpy(self.debug, "E:No GPS");
+    strncpy(self.debug, "E:No GPS", 10);
   }
 
   if (millis() > TIMEOUT && self.state == P_Loading) {
     Serial.println("Loading taking too long...");
     self.state = P_Error;
-    strcpy(self.debug, "E:TimeGPS");
+    strncpy(self.debug, "E:TimeGPS", 10);
   }
   
   /* Displaying infos */
