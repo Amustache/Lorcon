@@ -1,15 +1,16 @@
-#include <Adafruit_SSD1306.h>
 #include <TinyGPS++.h>
 #include <HardwareSerial.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
+#include <U8g2lib.h>
 #include "arduino_secret.h"
+#include <string.h>
 
 /* Your SECRETS */
 const char* ssid = SECRET_SSID;
 const char* password = SECRET_PASSWORD;
-String serverName = SECRET_SERVERNAME;
+const char* serverName = SECRET_SERVERNAME;
 
 /* Screen declarations */
 #define SCREEN_WIDTH 128  // OLED display width, in pixels
@@ -19,9 +20,7 @@ String serverName = SECRET_SERVERNAME;
 #define MAX_LINE SCREEN_HEIGHT/CHAR_HEIGHT
 #define MAX_COL SCREEN_WIDTH/CHAR_WIDTH
 
-#define OLED_RESET     -1  // Reset pin
-#define SCREEN_ADDRESS 0x3C  // See doc
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+U8G2_SSD1306_128X64_NONAME_F_SW_I2C display(U8G2_R0, SCL, SDA, U8X8_PIN_NONE);
 
 /* Debug values */
 #define TIMEOUT 300*1000  // 300s or 5min
@@ -39,14 +38,15 @@ typedef enum State {
 } State;
 
 typedef struct Protocone {
-  String uniqueid;
+  char uniqueid[8];
   State state;
   uint8_t last_update[6];  // y, m, d, h, m, s
   double lon, lat;
   uint8_t power, shields;
-  String capture_code;
-  String name, team;
-  String debug;
+  char capture_code[8];
+  char name[16];
+  char team[16];
+  char debug[16];
 } Protocone;
 
 Protocone self;
@@ -59,29 +59,32 @@ void setup() {
   hserial.begin(9600, SERIAL_8N1, 16, 17);
 
   /* Screen init */
-  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println(F("SSD1306 allocation failed"));
-    for(;;); // Don't proceed, loop forever
-  }
-  
-  display.setTextSize(2); // Draw 2X-scale text
-  display.setTextColor(SSD1306_WHITE);
-  display.setTextWrap(false);
-  
-  display.display();
-  display.clearDisplay();
+  display.begin();
+  display.setFont(u8g2_font_profont22_tr);
+
+  display.clearBuffer();
+  text_on_line(0, "  LORCON  ");
+  text_on_line(1, "Bienvenue!");
+  display.sendBuffer();
+  delay(1000);
 
   /* Network init */
   WiFi.begin(ssid, password);
   Serial.println("Connecting");
+
+  display.clearBuffer();
+  strcpy(self.debug, "WiFi");
+  text_on_line(0, "Loading..");
+  text_on_line(1, self.debug);
+  display.sendBuffer();
+  
   while(WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(500); 
     Serial.print(".");
     if (millis() > TIMEOUT && self.state == P_Loading) {
       Serial.println("No WiFi...");
       self.state = P_Error;
-      self.debug = "Timeout";
+      strcpy(self.debug, "E:TimeWiFi");
       break;
     }
   }
@@ -96,7 +99,7 @@ void setup() {
   }
 
   /* Protocone init */
-  protocone_init(&self, String(WiFi.macAddress()));
+  protocone_init(&self, "abcdef");
 }
 
 void loop() {
@@ -110,42 +113,43 @@ void loop() {
   if (millis() > 5000 && gps.charsProcessed() < 10) {
     Serial.println("No GPS detected...");
     self.state = P_Error;
-    self.debug = "No GPS";
+    strcpy(self.debug, "E:No GPS");
   }
 
   if (millis() > TIMEOUT && self.state == P_Loading) {
     Serial.println("Loading taking too long...");
     self.state = P_Error;
-    self.debug = "Timeout";
+    strcpy(self.debug, "E:TimeGPS");
   }
   
   /* Displaying infos */
-  display.clearDisplay();
-
+  display.clearBuffer();
+  
   switch(self.state) {
     case P_Error:
-      text_on_line(String(".inactive."), 0);
-      text_on_line(String("E:") + self.debug, 1);
-      text_on_line(String("Call a mod"), 3);
-      while(1);
+      text_on_line(0, "Inactive");
+      text_on_line(1, self.debug);
+      text_on_line(3, "Call a mod");
       break;
     case P_Init:
-      text_on_line(String(".not init."), 0);
+      text_on_line(0, "Initial..");
+      text_on_line(1, self.debug);
       break;
     case P_Loading:
-      text_on_line(String("loading..."), 0);
-      text_on_line(String(self.debug), 1);
+      text_on_line(0, "Loading..");
+      text_on_line(1, self.debug);
       break;
     case P_Ok:
-      text_on_line(String("working (:"), 0);
+      text_on_line(0, "Working (:");
       // TODO
       break;
     default:
-      text_on_line(String("... what?."), 0);
+      text_on_line(0, "DEADBEEF");
+      //text_on_line(String("... what?."), 0);
       break;
   }
   
-  display.display();
+  display.sendBuffer();
 
   delay(1000);
 }

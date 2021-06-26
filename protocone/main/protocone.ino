@@ -1,15 +1,15 @@
-void protocone_init(Protocone* protocone, String uniqueid_) {
-  protocone->uniqueid = uniqueid_;
+void protocone_init(Protocone* protocone, const char* uniqueid_) {
+  strcpy(protocone->uniqueid, uniqueid_);
   protocone->state = P_Init;
   protocone->last_update[0] = protocone->last_update[1] = protocone->last_update[2] = protocone->last_update[3] = protocone->last_update[4] = protocone->last_update[5] = -1;
   protocone->lon = 0.0;
   protocone->lat = 0.0;
   protocone->power = -1;
   protocone->shields = -1;
-  protocone->capture_code = "";
-  protocone->name = "";
-  protocone->team = "";
-  protocone->debug = "";
+  strcpy(protocone->capture_code, uniqueid_);
+  strcpy(protocone->name, "");
+  strcpy(protocone->team, "");
+  strcpy(protocone->debug, "");
   Serial.println("Protocone init done.");
 }
 
@@ -25,7 +25,7 @@ void protocone_update_gps(Protocone* protocone, TinyGPSPlus gps) {
   } else {
     Serial.println("Date or time not valid.");
     protocone->state = P_Loading;
-    protocone->debug = "Datetime";
+    strcpy(protocone->debug, "Datetime");
     return;
   }
 
@@ -36,12 +36,12 @@ void protocone_update_gps(Protocone* protocone, TinyGPSPlus gps) {
   } else {
     Serial.println("GPS not valid.");
     protocone->state = P_Loading;
-    protocone->debug = "GPS";
+    strcpy(protocone->debug, "GPS");
     return;
   }
 
   protocone->state = P_Ok;
-  protocone->debug = "";
+  strcpy(protocone->debug, "");
 
   Serial.print(F("Location: "));
   Serial.print(gps.location.lat(), 6);
