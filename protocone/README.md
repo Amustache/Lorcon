@@ -14,6 +14,14 @@ And some wires and a USB cable. The assembly must respect the following scheme:
 
 ![Diagram](./diagram.png)
 
+Basically:
+- VCC <> 3.3V
+- GND <> GND
+- SCL <> GPIO 22 (I2C SCL)
+- SDA <> GPIO 21 (I2C SDA)
+- RX <> GPIO 17 (UART 2 TX)
+- TX <> GPIO 16 (UART 2 RX)
+
 \* The links are indicative, I am not an affiliate and I do not earn money if you click.
 
 ### Structure
