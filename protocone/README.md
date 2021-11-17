@@ -62,6 +62,14 @@ The screen should show the various configuration steps and then the information 
 
 ##
 
+**Q:** I get `Failed to connect to ESP32: Timed out waiting for packet header` when uploading the code.
+
+**A:** In the `Connecting...` phase, hold down the “BOOT/FLASH” button in your ESP32 board while uploading.
+
+Or go apeshit and [connect a 10 uF electrolytic capacitor between the EN pin and GND](https://randomnerdtutorials.com/solved-failed-to-connect-to-esp32-timed-out-waiting-for-packet-header/).
+
+##
+
 **Q:** I have an error code on the display.
 
 **A:** `TimeoutWFI` means that the WiFi connection was not successful after many attempts. Check your connection settings.
